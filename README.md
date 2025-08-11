@@ -13,3 +13,5 @@ OCR-based document translator with Text-to-Speech using **React**, **Node.js**, 
 **Backend:** Node.js, Express, Multer, gtts, node-fetch  
 **Python:** pytesseract, Pillow, PyPDF2  
 
+## Screenshot
+![Image Upload Example](docs/image-upload.png)
