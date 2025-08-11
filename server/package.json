@@ -16,6 +16,7 @@
     "libretranslate": "^1.0.1",
     "mongodb": "^6.17.0",
     "multer": "^2.0.2",
+    "node-gtts": "^2.0.2",
     "tesseract.js": "^6.0.1"
   }
 }
