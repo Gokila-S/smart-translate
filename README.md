@@ -53,20 +53,12 @@ Open the client URL shown by Vite (usually http://localhost:5173).
 4. Use Listen controls to Play/Pause/Resume/Stop; progress is shown.
 5. Download Text/Audio as needed.
 
-## Notes
-- Large texts stay inside the card; panes scroll without breaking layout.
-- TTS uses gTTS via the backend; the MP3 is streamed back to the client.
-- OCR uses EasyOCR; for best results, upload clear, high‑contrast images.
-
 ## Folder structure
 ```
 client/   # React app (Vite)
 server/   # Express API + Python OCR/PDF helpers
 docs/     # Screenshots/assets
 ```
-
-## Screenshot
-![UI](docs/image-upload.png)
 
 ---
 Made by Gokila
