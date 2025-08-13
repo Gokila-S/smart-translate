@@ -76,6 +76,12 @@ body {
 }
 
 /* Sections */
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
 .section-title {
   font-size: 16px; color: #cbd5e1; margin: 24px 0 16px; text-transform: uppercase;
   letter-spacing: 0.15em; font-weight: 700; position: relative; padding-left: 20px;
@@ -87,7 +93,14 @@ body {
 }
 .row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; justify-content: center; }
 .tiny-row { display: flex; gap: 12px; align-items: center; margin-top: 12px; justify-content: space-between; }
-.panes { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 8px; }
+.panes { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 24px; 
+  margin-top: 8px; 
+  justify-content: center; 
+  width: 100%;
+}
 @media (min-width: 900px) { .panes { grid-template-columns: 1fr 1fr; } }
 .pane { display: flex; flex-direction: column; gap: 12px; }
 .pane-title { font-size: 13px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
@@ -106,23 +119,23 @@ body {
   background: transparent; color: var(--fg); border: none; outline: none;
   font-size: 14px; padding: 10px 12px; border-radius: 10px;
   min-width: 150px; appearance: none; cursor: pointer; transition: all 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
-.control select:active,
-.control select:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+.control select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); 
+  border-color: var(--accent);
 }
 .control select option {
-    background-color: var(--card); /* Match card background */
-    color: var(--fg); /* Foreground color */
+    background-color: var(--card); 
+    color: var(--fg);
     padding: 10px 12px;
 }
 .control select option:hover {
-    background-color: var(--border-light); /* Highlight on hover */
+    background-color: var(--border-light);
 }
-.control select:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 .control::after {
-  content: '▼'; position: absolute; right: 16px; top: 50%;
+  content: '▼'; position: absolute; right: 28px; top: 50%;
   transform: translateY(-50%); color: var(--muted);
   pointer-events: none;
 }

@@ -20,6 +20,8 @@ function App() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [summarizedText, setSummarizedText] = useState("");
+  const [summarizedNative, setSummarizedNative] = useState("");
 
   useEffect(() => {
     const buildGloss = async () => {
@@ -226,6 +228,34 @@ function App() {
     { code: 'te', name: 'Telugu', flag: '🇮🇳' },
   ];
 
+  const handleSummarize = async () => {
+    if (!translated.trim()) return;
+    setLoading(true);
+    try {
+      // Step 1: Summarize the translated text
+      const res = await axios.post("http://localhost:5000/summarize", { 
+        text: translated, 
+        lang: lang 
+      });
+      const nativeSummary = res.data.summary;
+      setSummarizedNative(nativeSummary);
+
+      // Step 2: Translate the native summary back to English for comparison
+      const englishRes = await axios.post("http://localhost:5000/translate", {
+        text: nativeSummary,
+        to: 'en',
+        mode: 'formal'
+      });
+      setSummarizedText(englishRes.data.translated);
+      
+    } catch (err) {
+      console.error("Summarization failed:", err);
+      alert("Summarization failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="page">
       <header className="hero">
@@ -298,7 +328,7 @@ function App() {
             </button>
           </div>
         </section>
-
+        
         <section>
           <h2 className="section-title">3. Edit & review</h2>
           <div className="panes">
@@ -335,7 +365,26 @@ function App() {
         </section>
 
         <section>
-          <h2 className="section-title">4. Listen</h2>
+          <h2 className="section-title">4. Summarize</h2>
+          <div className="panes">
+            <div className="pane">
+              <div className="pane-title">English Summary</div>
+              <textarea rows={5} value={summarizedText} readOnly placeholder="Summarized English text will appear here." className="area" />
+            </div>
+            <div className="pane">
+              <div className="pane-title">Native Summary</div>
+              <textarea rows={5} value={summarizedNative} readOnly placeholder="Translated summary will appear here." className="area" />
+            </div>
+          </div>
+          <div className="row">
+            <button onClick={handleSummarize} disabled={!translated || loading} className="btn accent">
+              {loading ? <Loader2 className="spin" size={18} /> : 'Summarize'}
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="section-title">5. Listen</h2>
           <div className="audio-player">
             <div className="audio-controls-row">
               <button className="btn square-btn play" onClick={handleSpeak} disabled={!translated || speaking}>
