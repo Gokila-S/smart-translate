@@ -6,7 +6,12 @@ import path from 'path'
 import { execFile } from 'child_process'
 import fetch from 'node-fetch'
 import gtts from 'node-gtts'
+import mongoose from 'mongoose'
+import dotenv from 'dotenv'
+import authRoutes from './routes/auth.js'
+import historyRoutes from './routes/history.js'
 
+dotenv.config()
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -72,7 +77,6 @@ app.post('/summarize', async (req, res) => {
 
   const runPy = (script, args) => new Promise((resolve, reject) => {
     execFile('python', [script, ...args], { cwd: process.cwd() }, (err, stdout, stderr) => {
-      // Log any standard error from the Python script
       if (stderr) {
         console.error('Python script error (stderr):', stderr);
       }
@@ -91,14 +95,24 @@ app.post('/summarize', async (req, res) => {
 
   try {
     console.log('Attempting to summarize...');
-    const out = await runPy('summarizer.py', [tempFilePath]);
-    console.log('Python script output:', out);
-    const result = JSON.parse(out);
-    if (result.error) {
-      console.error('Summarization returned an error:', result.error);
-      return res.status(500).json({ error: 'Summarization failed', detail: result.error });
+    let out = '';
+    let result;
+    try {
+      out = await runPy('summarizer.py', [tempFilePath]);
+      console.log('Python script output:', out);
+      result = JSON.parse(out);
+    } catch (e) {
+      console.warn('Python summarize failed or returned invalid JSON. Falling back.', e);
+      result = null;
     }
-    res.json({ summary: result.summary });
+
+    if (!result || result.error) {
+      // Node fallback: simple sentence-based summary (first 3 sentences)
+      const parts = String(text).trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+      const fallback = parts.slice(0, Math.max(1, Math.min(3, parts.length))).join(' ');
+      return res.json({ summary: fallback });
+    }
+    res.json({ summary: result.summary || '' });
   } catch (e) {
     console.error('Server side summarization failed:', e);
     res.status(500).json({ error: 'Summarization handling failed', detail: e.message });
@@ -231,24 +245,34 @@ app.post('/translateTokens', async (req, res) => {
   try {
     const { tokens = [], from = 'auto', to = 'en' } = req.body || {}
     if (!Array.isArray(tokens) || tokens.length === 0) return res.json({ map: {} })
-    const uniq = Array.from(new Set(tokens.filter(t => typeof t === 'string' && t.trim())))
+    // Limit to avoid very long URLs / API issues
+    const uniq = Array.from(new Set(tokens.filter(t => typeof t === 'string' && t.trim()))).slice(0, 300)
     const base = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(from)}&tl=${encodeURIComponent(to)}&dt=t`
     const joined = uniq.join('\n')
     const url = `${base}&q=${encodeURIComponent(joined)}`
-    const result = await fetch(url).then(r => r.json())
-    const combined = (result && result[0]) ? result[0].map(p => p[0]).join('') : ''
-    let parts = combined.split('\n')
+    let data;
+    try {
+      data = await fetch(url).then(r => r.json())
+    } catch (e) {
+      data = null
+    }
     let map = {}
-    if (parts.length === uniq.length) {
-      uniq.forEach((tok, i) => { map[tok] = parts[i] })
-    } else {
+    if (data && data[0]) {
+      const combined = data[0].map(p => p[0]).join('')
+      const parts = combined.split('\n')
+      if (parts.length === uniq.length) {
+        uniq.forEach((tok, i) => { map[tok] = parts[i] })
+      }
+    }
+    // If bulk call failed or mismatch, fallback per-token
+    if (Object.keys(map).length !== uniq.length) {
       map = {}
       for (const tok of uniq) {
         const u = `${base}&q=${encodeURIComponent(tok)}`
         try {
           const r = await fetch(u).then(r => r.json())
           const gloss = (r && r[0]) ? r[0].map(p => p[0]).join('') : tok
-          map[tok] = gloss
+          map[tok] = gloss || tok
         } catch {
           map[tok] = tok
         }
@@ -287,4 +311,15 @@ app.post('/tts', (req, res) => {
 });
 
 // ======== START SERVER =========
+// Connect to MongoDB and start server
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-translator';
+mongoose
+  .connect(MONGO_URI, { dbName: process.env.MONGO_DB || undefined })
+  .then(() => console.log('MongoDB connected'))
+  .catch((e) => console.warn('MongoDB connection failed:', e.message));
+
+// Mount API routes
+app.use('/api/auth', authRoutes)
+app.use('/api/history', historyRoutes)
+
 app.listen(5000, () => console.log('Server running on port 5000'));

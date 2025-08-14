@@ -1,0 +1,23 @@
+/* Styles specific to the History Page */
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+}
+.history-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+@media (min-width: 768px) {
+  .history-item {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.history-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
