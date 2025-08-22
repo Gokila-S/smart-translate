@@ -1,21 +1,22 @@
 # Smart Translator
-A modern, single-page translator with OCR, word tooltips, and Text‑to‑Speech. Built with React, Node.js, and Python.
+A modern, single-page translator with OCR, word tooltips, and Text‑to‑Speech, and history. Built with React, Node.js, and Python.
 
 ## Features
-- Drag‑and‑drop file upload (PDF/Image/TXT) with extract button
-- OCR & text extraction via Python (EasyOCR, PyMuPDF)
-- Manual text entry supported
-- Translate using Google’s free endpoint (friendly/formal modes)
-- Word tooltips for vocabulary (hover to see English gloss)
-- Audio controls: Play, Pause, Resume, Stop + progress bar
-- Download translated text and audio
-- Responsive UI, side‑by‑side on desktop; stacked on mobile; language dropdown with flags
+- Drag & drop file upload (PDF/Image/TXT) + Extract Text
+- OCR & text extraction (EasyOCR, PyMuPDF)
+- Manual text entry
+- Translate with friendly/formal modes
+- Word tooltips for vocabulary
+- Audio controls: Play, Pause, Resume, Stop + progress
+- Download text/audio
+- Translation history
+- Soft notifications when ready
 
-## Tech stack
+## Tech Stack
 - Frontend: React (Vite), Axios, lucide-react icons, custom CSS
 - Backend: Node.js, Express, Multer, node-fetch, node-gtts
 - Python: EasyOCR, PyMuPDF
-
+- 
 ## Prerequisites
 - Node.js 18+ (or 20+)
 - Python 3.x with pip
@@ -47,11 +48,13 @@ npm run dev
 Open the client URL shown by Vite (usually http://localhost:5173).
 
 ## Usage
-1. Drop a PDF/Image/TXT into the upload card (or click to browse), then click “Extract Text”.
-2. Choose target language and style, then “Translate”.
-3. Toggle “Word tips” to see hover tooltips for vocabulary.
-4. Use Listen controls to Play/Pause/Resume/Stop; progress is shown.
-5. Download Text/Audio as needed.
+
+1. Upload or drag a PDF/Image/TXT → click **Extract Text**  
+2. Select target language & style → **Translate**  
+3. Hover words to see **tooltips**  
+4. Play audio with **Listen controls** (Play/Pause/Resume/Stop + progress)  
+5. Download **text/audio** as needed  
+
 
 ## Folder structure
 ```
@@ -61,4 +64,4 @@ docs/     # Screenshots/assets
 ```
 
 ---
-Made by Gokila
+Made with ❣️by Gokila
