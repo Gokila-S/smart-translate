@@ -41,7 +41,7 @@ function TranslatorPage() {
             ));
             if (tokens.length === 0) { setGlossMap({}); return; }
             try {
-                const res = await axios.post('https://smart-translate-yb08.onrender.com/translateTokens', { tokens, from: lang, to: 'en' });
+                const res = await axios.post('https://smart-translate-backend-api.onrender.com/translateTokens', { tokens, from: lang, to: 'en' });
                 setGlossMap(res.data.map || {});
             } catch (e) {
                 console.error('tooltip gloss fetch failed', e);
@@ -78,7 +78,7 @@ function TranslatorPage() {
 
         setLoading(true);
         try {
-            const res = await axios.post("https://smart-translate-yb08.onrender.com/upload", form);
+            const res = await axios.post("https://smart-translate-backend-api.onrender.com/upload", form);
             setText(res.data.text);
             setTranslated("");
             smartNotify('Text extracted', { body: 'Your document text is ready to translate.' }).catch(()=>{});
@@ -97,14 +97,14 @@ function TranslatorPage() {
 
         try {
             // Perform the translation
-            const res = await axios.post("https://smart-translate-yb08.onrender.com/translate", { text, to: lang, mode });
+            const res = await axios.post("https://smart-translate-backend-api.onrender.com/translate", { text, to: lang, mode });
             const out = res.data.translated;
             setTranslated(out);
             smartNotify('Translation ready', { body: 'Click to view the translated text.' }).catch(()=>{});
             // Save to history if logged in
             try {
                 if (user && token) {
-                    await axios.post('https://smart-translate-yb08.onrender.com/api/history', { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
+                    await axios.post('https://smart-translate-backend-api.onrender.com/api/history', { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
                 }
             } catch (e) {
                 console.warn('History save failed:', e?.response?.data || e.message);
@@ -126,7 +126,7 @@ function TranslatorPage() {
         setDuration(0);
 
         try {
-            const res = await fetch("https://smart-translate-yb08.onrender.com/tts", {
+            const res = await fetch("https://smart-translate-backend-api.onrender.com/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: translated, lang })
@@ -256,12 +256,12 @@ function TranslatorPage() {
         setLoading(true);
         try {
             // Ask backend to produce a summary in the selected language (it will handle EN roundtrip)
-            const res = await axios.post("https://smart-translate-yb08.onrender.com/summarize", { text: translated, lang });
+            const res = await axios.post("https://smart-translate-backend-api.onrender.com/summarize", { text: translated, lang });
             const nativeSummary = res.data.summary || '';
             setSummarizedNative(nativeSummary);
             // Also get English version for reference
             if (nativeSummary) {
-                const englishRes = await axios.post("https://smart-translate-yb08.onrender.com/translate", { text: nativeSummary, to: 'en', mode: 'formal' });
+                const englishRes = await axios.post("https://smart-translate-backend-api.onrender.com/translate", { text: nativeSummary, to: 'en', mode: 'formal' });
                 setSummarizedText(englishRes.data.translated || '');
             } else {
                 setSummarizedText('');

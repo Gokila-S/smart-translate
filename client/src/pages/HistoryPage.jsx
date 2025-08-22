@@ -17,7 +17,7 @@ function HistoryPage() {
                 return;
             }
             try {
-                const res = await axios.get('https://smart-translate-yb08.onrender.com/api/history', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await axios.get('https://smart-translate-backend-api.onrender.com/api/history', { headers: { Authorization: `Bearer ${token}` } });
                 setHistory(res.data.items || []);
             } catch (err) {
                 console.error('Failed to fetch history', err);
