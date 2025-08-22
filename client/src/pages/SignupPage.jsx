@@ -19,7 +19,7 @@ function SignupPage() {
     e.preventDefault();
     setError('');
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { username, email, password });
+  await axios.post('https://smart-translate-yb08.onrender.com/api/auth/register', { username, email, password });
   await login(email, password);
   toast.success('Account created! You are now logged in.');
       navigate('/app');
