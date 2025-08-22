@@ -426,7 +426,7 @@ function TranslatorPage() {
                             <div className="progress-bar" style={{ width: `${progress}%` }} />
                             {speaking && (
                                 <div className="speaking-note">
-                                    {duration ? `Playing... ${Math.round((progress / 100) * duration)}s / ${Math.round(duration)}s` : 'Playing...'}
+                                    {duration ? `Playing ${Math.round((progress / 100) * duration)}s / ${Math.round(duration)}s` : 'Loading...'}
                                 </div>
                             )}
                         </div>
