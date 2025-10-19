@@ -16,7 +16,7 @@ A modern, single-page translator with OCR, word tooltips, and Text‑to‑Speech
 - Frontend: React (Vite), Axios, lucide-react icons, custom CSS
 - Backend: Node.js, Express, Multer, node-fetch, node-gtts
 - Python: EasyOCR, PyMuPDF
-- 
+
 ## Prerequisites
 - Node.js 18+ (or 20+)
 - Python 3.x with pip
