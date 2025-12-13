@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config.js';
 
 const AuthContext = createContext({ user: null, token: null, login: async () => {}, logout: () => {} });
 
@@ -10,32 +11,32 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      const storedToken = sessionStorage.getItem('token');
+      const storedUser = sessionStorage.getItem('user');
 
       if (storedToken && storedUser) {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
       }
     } catch (e) {
-      console.error("Failed to load auth data from localStorage", e);
+      console.error("Failed to load auth data from sessionStorage", e);
     }
     setLoading(false);
   }, []);
 
   const persist = (u, t) => {
     if (!u && !t) {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
     } else {
-      localStorage.setItem('user', JSON.stringify(u));
-      localStorage.setItem('token', t);
+      sessionStorage.setItem('user', JSON.stringify(u));
+      sessionStorage.setItem('token', t);
     }
   };
 
   const login = useCallback(async (email, password) => {
     try {
-  const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+  const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       setUser(data.user);
       setToken(data.token);
       persist(data.user, data.token);
@@ -48,10 +49,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    // Clear all localStorage items related to auth
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.clear(); // Clear everything to be safe
+    persist(null, null);
   }, []);
 
   const value = useMemo(() => ({ user, token, login, logout }), [user, token, login, logout]);

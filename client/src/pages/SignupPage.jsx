@@ -4,6 +4,7 @@ import './SignupPage.css'; // Import the new CSS file
 import '../App.css'; // Common styles
 import axios from 'axios';
 import AuthContext from '../context/AuthContext.jsx';
+import API_BASE_URL from '../config.js';
 import { useToast } from '../context/ToastContext.jsx';
 
 function SignupPage() {
@@ -19,7 +20,7 @@ function SignupPage() {
     e.preventDefault();
     setError('');
     try {
-  await axios.post('http://localhost:5000/api/auth/register', { username, email, password });
+  await axios.post(`${API_BASE_URL}/api/auth/register`, { username, email, password });
   await login(email, password);
   toast.success('Account created! You are now logged in.');
       navigate('/app');

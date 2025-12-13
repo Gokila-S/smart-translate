@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext.jsx';
+import API_BASE_URL from '../config.js';
 import { useToast } from '../context/ToastContext.jsx';
 import './HistoryPage.css';
 import '../App.css';
 
 function HistoryPage() {
     const { user } = useContext(AuthContext);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -20,7 +21,7 @@ function HistoryPage() {
                 return;
             }
             try {
-                const res = await axios.get('http://localhost:5000/api/history', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await axios.get(`${API_BASE_URL}/api/history`, { headers: { Authorization: `Bearer ${token}` } });
                 setHistory(res.data.items || []);
             } catch (err) {
                 console.error('Failed to fetch history', err);
@@ -35,7 +36,7 @@ function HistoryPage() {
     const handleClearAll = async () => {
         if (!user || !token) return;
         try {
-            const res = await axios.delete('http://localhost:5000/api/history', { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.delete(`${API_BASE_URL}/api/history`, { headers: { Authorization: `Bearer ${token}` } });
             setHistory([]);
             toast.success(`Cleared history (${res.data.deletedCount || 0}).`);
         } catch (e) {
@@ -71,7 +72,7 @@ function HistoryPage() {
                                     <button className="btn subtle" onClick={async ()=>{
                                         if (!confirm('Delete this history item?')) return;
                                         try {
-                                            await axios.delete(`http://localhost:5000/api/history/${item._id}`, { headers: { Authorization: `Bearer ${token}` } });
+                                            await axios.delete(`${API_BASE_URL}/api/history/${item._id}`, { headers: { Authorization: `Bearer ${token}` } });
                                             setHistory(h => h.filter(it => it._id !== item._id));
                                             toast.info('Item deleted');
                                         } catch (e) {

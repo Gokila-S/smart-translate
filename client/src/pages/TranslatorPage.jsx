@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useContext } from "react";
 import axios from "axios";
 import { Upload, Globe, Play, Pause, Square, Download, Loader2 } from "lucide-react";
 import AuthContext from "../context/AuthContext.jsx";
+import API_BASE_URL from "../config.js";
 import "./TranslatorPage.css";
 import { smartNotify, ensureNotifyPermission } from "../utils/notify";
 
@@ -41,7 +42,7 @@ function TranslatorPage() {
             ));
             if (tokens.length === 0) { setGlossMap({}); return; }
             try {
-                const res = await axios.post('http://localhost:5000/translateTokens', { tokens, from: lang, to: 'en' });
+                const res = await axios.post(`${API_BASE_URL}/translateTokens`, { tokens, from: lang, to: 'en' });
                 setGlossMap(res.data.map || {});
             } catch (e) {
                 console.error('tooltip gloss fetch failed', e);
@@ -126,7 +127,7 @@ function TranslatorPage() {
         setDuration(0);
 
         try {
-            const res = await fetch("http://localhost:5000/tts", {
+            const res = await fetch(`${API_BASE_URL}/tts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: translated, lang })

@@ -13,7 +13,7 @@ function RequireAuth({ children }) {
   const { user, token } = useContext(AuthContext);
   const location = useLocation();
   // Allow access if we have a user OR a token (token may be set before user state updates).
-  const storedToken = (!token && typeof window !== 'undefined') ? localStorage.getItem('token') : null;
+  const storedToken = (!token && typeof window !== 'undefined') ? sessionStorage.getItem('token') : null;
   if (!user && !token && !storedToken) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
@@ -27,11 +27,8 @@ function App() {
 
   const handleLogout = () => {
     logout();
-    toast.info('Logged out successfully.');
-    // Navigate to home page instead of login
-    navigate('/', { replace: true });
-    // Force a page reload to clear all state
-    window.location.reload();
+  toast.info('Logged out successfully.');
+    navigate('/login', { replace: true });
   };
   return (
     <>
