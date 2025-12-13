@@ -188,18 +188,7 @@ const LandingPage = () => {
             position: 'relative',
             marginBottom: '32px'
           }}>
-            <div style={{
-              content: '',
-              position: 'absolute',
-              top: '-30px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '120px',
-              height: '3px',
-              background: 'linear-gradient(90deg, transparent, #60a5fa, #a855f7, #34d399, transparent)',
-              borderRadius: '2px',
-              opacity: 0.9
-            }} />
+
             
             <h1 style={{
               fontSize: 'clamp(36px, 5vw, 72px)',
@@ -209,11 +198,10 @@ const LandingPage = () => {
               lineHeight: '1.1'
             }} className="animate-glow">
               <span style={{
-                background: 'linear-gradient(135deg, #60a5fa 0%, #a855f7 40%, #f59e0b 80%, #34d399 100%)',
+                background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%)',
                 WebkitBackgroundClip: 'text',
                 backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 40px rgba(96, 165, 250, 0.3)'
+                WebkitTextFillColor: 'transparent'
               }}>
                 Your Smart Companion for{' '}
               </span>
@@ -228,10 +216,7 @@ const LandingPage = () => {
                 <span 
                   key={tickerText}
                   style={{
-                    background: 'linear-gradient(135deg, #34d399 0%, #60a5fa 50%, #a855f7 100%)',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    color: '#60a5fa',
                     display: 'inline-block',
                     minWidth: '280px',
                     textAlign: 'center',
@@ -292,13 +277,12 @@ const LandingPage = () => {
                 position: 'relative',
                 overflow: 'hidden'
               }}
-              className="animate-pulse"
               onMouseOver={(e) => {
-                e.target.style.transform = 'translateY(-6px) scale(1.05)';
-                e.target.style.boxShadow = '0 20px 50px rgba(59, 130, 246, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 12px 35px rgba(59, 130, 246, 0.5)';
               }}
               onMouseOut={(e) => {
-                e.target.style.transform = 'translateY(0) scale(1)';
+                e.target.style.transform = 'translateY(0)';
                 e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
               }}>
               <span style={{
