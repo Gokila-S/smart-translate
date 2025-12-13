@@ -208,7 +208,8 @@ app.post('/translate', async (req, res) => {
   
   const source = mode === 'friendly' ? simplify(text) : text
   
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${to}&dt=t&q=${encodeURIComponent(source)}`
+  const translateBaseUrl = process.env.TRANSLATE_API_URL || 'https://translate.googleapis.com/translate_a/single'
+  const url = `${translateBaseUrl}?client=gtx&sl=auto&tl=${to}&dt=t&q=${encodeURIComponent(source)}`
   const result = await fetch(url).then(r => r.json())
   res.json({ translated: result[0].map(p => p[0]).join('') })
 })
@@ -225,7 +226,8 @@ app.post('/glossary', async (req, res) => {
       const key = `${lang}:${t}`
       if (glossCache.has(key)) { out[t] = glossCache.get(key); return }
       try {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(lang)}&tl=en&dt=t&q=${encodeURIComponent(t)}`
+        const translateBaseUrl = process.env.TRANSLATE_API_URL || 'https://translate.googleapis.com/translate_a/single'
+        const url = `${translateBaseUrl}?client=gtx&sl=${encodeURIComponent(lang)}&tl=en&dt=t&q=${encodeURIComponent(t)}`
         const data = await fetch(url).then(r => r.json())
         const eng = data?.[0]?.[0]?.[0] || ''
         if (eng) {
@@ -247,7 +249,8 @@ app.post('/translateTokens', async (req, res) => {
     if (!Array.isArray(tokens) || tokens.length === 0) return res.json({ map: {} })
     // Limit to avoid very long URLs / API issues
     const uniq = Array.from(new Set(tokens.filter(t => typeof t === 'string' && t.trim()))).slice(0, 300)
-    const base = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(from)}&tl=${encodeURIComponent(to)}&dt=t`
+    const translateBaseUrl = process.env.TRANSLATE_API_URL || 'https://translate.googleapis.com/translate_a/single'
+    const base = `${translateBaseUrl}?client=gtx&sl=${encodeURIComponent(from)}&tl=${encodeURIComponent(to)}&dt=t`
     const joined = uniq.join('\n')
     const url = `${base}&q=${encodeURIComponent(joined)}`
     let data;
