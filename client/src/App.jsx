@@ -27,8 +27,11 @@ function App() {
 
   const handleLogout = () => {
     logout();
-  toast.info('Logged out successfully.');
-    navigate('/login', { replace: true });
+    toast.info('Logged out successfully.');
+    // Navigate to home page instead of login
+    navigate('/', { replace: true });
+    // Force a page reload to clear all state
+    window.location.reload();
   };
   return (
     <>

@@ -48,7 +48,10 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    persist(null, null);
+    // Clear all localStorage items related to auth
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.clear(); // Clear everything to be safe
   }, []);
 
   const value = useMemo(() => ({ user, token, login, logout }), [user, token, login, logout]);
