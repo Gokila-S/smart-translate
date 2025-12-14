@@ -257,12 +257,12 @@ function TranslatorPage() {
         setLoading(true);
         try {
             // Ask backend to produce a summary in the selected language (it will handle EN roundtrip)
-            const res = await axios.post("http://localhost:5000/summarize", { text: translated, lang });
+            const res = await axios.post(`${API_BASE_URL}/summarize`, { text: translated, lang });
             const nativeSummary = res.data.summary || '';
             setSummarizedNative(nativeSummary);
             // Also get English version for reference
             if (nativeSummary) {
-                const englishRes = await axios.post("http://localhost:5000/translate", { text: nativeSummary, to: 'en', mode: 'formal' });
+                const englishRes = await axios.post(`${API_BASE_URL}/translate`, { text: nativeSummary, to: 'en', mode: 'formal' });
                 setSummarizedText(englishRes.data.translated || '');
             } else {
                 setSummarizedText('');
