@@ -72,52 +72,14 @@ app.post('/summarize', async (req, res) => {
     return res.status(400).json({ error: 'No text provided' });
   }
 
-  const tempFilePath = path.join(process.cwd(), 'temp_summary.txt');
-  fs.writeFileSync(tempFilePath, text, 'utf8');
-
-  const runPy = (script, args) => new Promise((resolve, reject) => {
-    execFile('python', [script, ...args], { cwd: process.cwd() }, (err, stdout, stderr) => {
-      if (stderr) {
-        console.error('Python script error (stderr):', stderr);
-      }
-      if (!err) return resolve(String(stdout || '').trim());
-      
-      // Fallback for Windows
-      execFile('py', ['-3', script, ...args], { cwd: process.cwd() }, (err2, stdout2, stderr2) => {
-        if (stderr2) {
-          console.error('Python script error (fallback stderr):', stderr2);
-        }
-        if (!err2) return resolve(String(stdout2 || '').trim());
-        return reject(stderr2 || stderr || err2?.message || err?.message);
-      });
-    });
-  });
-
   try {
-    console.log('Attempting to summarize...');
-    let out = '';
-    let result;
-    try {
-      out = await runPy('summarizer.py', [tempFilePath]);
-      console.log('Python script output:', out);
-      result = JSON.parse(out);
-    } catch (e) {
-      console.warn('Python summarize failed or returned invalid JSON. Falling back.', e);
-      result = null;
-    }
-
-    if (!result || result.error) {
-      // Node fallback: simple sentence-based summary (first 3 sentences)
-      const parts = String(text).trim().split(/(?<=[.!?])\s+/).filter(Boolean);
-      const fallback = parts.slice(0, Math.max(1, Math.min(3, parts.length))).join(' ');
-      return res.json({ summary: fallback });
-    }
-    res.json({ summary: result.summary || '' });
+    // Simple sentence-based fallback (reliable on all platforms)
+    const parts = String(text).trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+    const summary = parts.slice(0, Math.max(1, Math.min(3, parts.length))).join(' ');
+    return res.json({ summary: summary || text });
   } catch (e) {
-    console.error('Server side summarization failed:', e);
-    res.status(500).json({ error: 'Summarization handling failed', detail: e.message });
-  } finally {
-    try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    console.error('Summarization failed:', e);
+    res.status(500).json({ error: 'Summarization failed', detail: e.message });
   }
 });
 
