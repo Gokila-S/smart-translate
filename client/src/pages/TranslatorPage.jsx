@@ -270,7 +270,7 @@ function TranslatorPage() {
             smartNotify('Summary ready', { body: 'Your summary has been generated.' }).catch(()=>{});
         } catch (err) {
             console.error("Summarization failed:", err);
-            alert("Summarization failed. Please try again.");
+            alert(`Summarization failed: ${err.response?.data?.error || err.message}`);
         } finally {
             setLoading(false);
         }
@@ -434,10 +434,6 @@ function TranslatorPage() {
                     </div>
                 </section>
             </main>
-            
-            <footer className="footer">
-                <div>© {new Date().getFullYear()} Smart Translator • Made by Gokila & Kaviya</div>
-            </footer>
         </div>
     );
 }
