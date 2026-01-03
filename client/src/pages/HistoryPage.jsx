@@ -7,8 +7,7 @@ import './HistoryPage.css';
 import '../App.css';
 
 function HistoryPage() {
-    const { user } = useContext(AuthContext);
-    const token = sessionStorage.getItem('token');
+    const { user, token } = useContext(AuthContext);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState(false);

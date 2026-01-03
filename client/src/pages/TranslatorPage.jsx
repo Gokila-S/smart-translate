@@ -8,8 +8,7 @@ import { smartNotify, ensureNotifyPermission } from "../utils/notify";
 
 function TranslatorPage() {
     // Get user from context
-    const { user } = useContext(AuthContext); 
-    const token = localStorage.getItem('token'); 
+    const { user, token } = useContext(AuthContext); 
 
     const [file, setFile] = useState(null);
     const [text, setText] = useState("");
@@ -79,7 +78,7 @@ function TranslatorPage() {
 
         setLoading(true);
         try {
-            const res = await axios.post("http://localhost:5000/upload", form);
+            const res = await axios.post(`${API_BASE_URL}/upload`, form);
             setText(res.data.text);
             setTranslated("");
             smartNotify('Text extracted', { body: 'Your document text is ready to translate.' }).catch(()=>{});
@@ -98,14 +97,14 @@ function TranslatorPage() {
 
         try {
             // Perform the translation
-            const res = await axios.post("http://localhost:5000/translate", { text, to: lang, mode });
+            const res = await axios.post(`${API_BASE_URL}/translate`, { text, to: lang, mode });
             const out = res.data.translated;
             setTranslated(out);
             smartNotify('Translation ready', { body: 'Click to view the translated text.' }).catch(()=>{});
             // Save to history if logged in
             try {
                 if (user && token) {
-                    await axios.post('http://localhost:5000/api/history', { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
+                    await axios.post(`${API_BASE_URL}/api/history`, { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
                 }
             } catch (e) {
                 console.warn('History save failed:', e?.response?.data || e.message);
