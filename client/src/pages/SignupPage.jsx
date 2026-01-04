@@ -7,11 +7,34 @@ import AuthContext from '../context/AuthContext.jsx';
 import API_BASE_URL from '../config.js';
 import { useToast } from '../context/ToastContext.jsx';
 
+// Loading Overlay Component
+const SignupLoadingOverlay = ({ isVisible }) => {
+    if (!isVisible) return null;
+    return (
+        <div className="signup-loading-overlay">
+            <div className="signup-loading-content">
+                <div className="signup-spinner-container">
+                    <div className="signup-spinner-ring"></div>
+                    <div className="signup-spinner-ring"></div>
+                    <div className="signup-spinner-ring"></div>
+                    <div className="signup-spinner-pulse"></div>
+                </div>
+                <h3 className="signup-loading-title">Creating Account</h3>
+                <p className="signup-loading-subtitle">Setting up your profile...</p>
+                <div className="signup-progress-track">
+                    <div className="signup-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const toast = useToast();
@@ -19,18 +42,22 @@ function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
-  await axios.post(`${API_BASE_URL}/api/auth/register`, { username, email, password });
-  await login(email, password);
-  toast.success('Account created! You are now logged in.');
+      await axios.post(`${API_BASE_URL}/api/auth/register`, { username, email, password });
+      await login(email, password);
+      toast.success('Account created! You are now logged in.');
       navigate('/app');
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed.');
-  toast.error(err.response?.data?.error || 'Signup failed.');
+      toast.error(err.response?.data?.error || 'Signup failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
     <div className="page signup-page-container">
+      <SignupLoadingOverlay isVisible={isLoading} />
       <main className="signup-card">
         <h2 className="signup-title">Sign Up</h2>
         <form className="form-content signup-form" onSubmit={handleSignup}>

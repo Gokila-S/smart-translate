@@ -229,10 +229,10 @@ app.post('/translateTokens', async (req, res) => {
         uniq.forEach((tok, i) => { map[tok] = parts[i] })
       }
     }
-    // If bulk call failed or mismatch, fallback per-token
+    // If bulk call failed or mismatch, fallback per-token in parallel
     if (Object.keys(map).length !== uniq.length) {
       map = {}
-      for (const tok of uniq) {
+      await Promise.all(uniq.map(async (tok) => {
         const u = `${base}&q=${encodeURIComponent(tok)}`
         try {
           const r = await fetch(u).then(r => r.json())
@@ -241,7 +241,7 @@ app.post('/translateTokens', async (req, res) => {
         } catch {
           map[tok] = tok
         }
-      }
+      }))
     }
     res.json({ map })
   } catch (e) {

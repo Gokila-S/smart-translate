@@ -6,16 +6,69 @@ import API_BASE_URL from "../config.js";
 import "./TranslatorPage.css";
 import { smartNotify, ensureNotifyPermission } from "../utils/notify";
 
+// Loading Overlay Component
+const LoadingOverlay = ({ type, isVisible }) => {
+    if (!isVisible) return null;
+
+    const loadingConfig = {
+        extracting: {
+            title: 'Extracting Text',
+            subtitle: 'Analyzing your document and extracting content...',
+            steps: ['Upload', 'Parse', 'Extract']
+        },
+        translating: {
+            title: 'Translating',
+            subtitle: 'Converting your text with AI-powered translation...',
+            steps: ['Analyze', 'Translate', 'Format']
+        },
+        summarizing: {
+            title: 'Summarizing',
+            subtitle: 'Creating an intelligent summary of your content...',
+            steps: ['Process', 'Condense', 'Generate']
+        },
+        speaking: {
+            title: 'Generating Audio',
+            subtitle: 'Converting text to natural speech...',
+            steps: ['Prepare', 'Synthesize', 'Stream']
+        }
+    };
+
+    const config = loadingConfig[type] || loadingConfig.translating;
+
+    return (
+        <div className="loading-overlay">
+            <div className="loading-content">
+                <div className="loading-spinner-container">
+                    <div className="loading-spinner-ring"></div>
+                    <div className="loading-spinner-ring"></div>
+                    <div className="loading-spinner-ring"></div>
+                    <div className="loading-pulse"></div>
+                </div>
+                <h3 className="loading-title">{config.title}</h3>
+                <p className="loading-subtitle">{config.subtitle}</p>
+                <div className="loading-progress-track">
+                    <div className="loading-progress-bar"></div>
+                </div>
+                <div className="loading-steps">
+                    {config.steps.map((step, i) => (
+                        <div key={i} className={`loading-step ${i === 0 ? 'completed' : i === 1 ? 'active' : ''}`} title={step}></div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 function TranslatorPage() {
     // Get user from context
-    const { user } = useContext(AuthContext); 
-    const token = localStorage.getItem('token'); 
+    const { user, token } = useContext(AuthContext); 
 
     const [file, setFile] = useState(null);
     const [text, setText] = useState("");
     const [translated, setTranslated] = useState("");
     const [lang, setLang] = useState("hi");
     const [loading, setLoading] = useState(false);
+    const [loadingType, setLoadingType] = useState(null); // 'extracting', 'translating', 'summarizing', 'speaking'
     const [speaking, setSpeaking] = useState(false);
     const [audioObj, setAudioObj] = useState(null);
     const [audioUrl, setAudioUrl] = useState(null);
@@ -78,8 +131,9 @@ function TranslatorPage() {
         form.append("file", file);
 
         setLoading(true);
+        setLoadingType('extracting');
         try {
-            const res = await axios.post("http://localhost:5000/upload", form);
+            const res = await axios.post(`${API_BASE_URL}/upload`, form);
             setText(res.data.text);
             setTranslated("");
             smartNotify('Text extracted', { body: 'Your document text is ready to translate.' }).catch(()=>{});
@@ -88,6 +142,7 @@ function TranslatorPage() {
             alert("Error extracting text. Please try again.");
         } finally {
             setLoading(false);
+            setLoadingType(null);
         }
     };
 
@@ -95,17 +150,18 @@ function TranslatorPage() {
         if (!user) { alert('Please login to use translation.'); return; }
         if (!text.trim()) return;
         setLoading(true);
+        setLoadingType('translating');
 
         try {
             // Perform the translation
-            const res = await axios.post("http://localhost:5000/translate", { text, to: lang, mode });
+            const res = await axios.post(`${API_BASE_URL}/translate`, { text, to: lang, mode });
             const out = res.data.translated;
             setTranslated(out);
             smartNotify('Translation ready', { body: 'Click to view the translated text.' }).catch(()=>{});
             // Save to history if logged in
             try {
                 if (user && token) {
-                    await axios.post('http://localhost:5000/api/history', { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
+                    await axios.post(`${API_BASE_URL}/api/history`, { original: text, translated: out, lang }, { headers: { Authorization: `Bearer ${token}` } });
                 }
             } catch (e) {
                 console.warn('History save failed:', e?.response?.data || e.message);
@@ -116,6 +172,7 @@ function TranslatorPage() {
             alert("Translation failed. Please try again.");
         } finally {
             setLoading(false);
+            setLoadingType(null);
         }
     };
 
@@ -255,6 +312,7 @@ function TranslatorPage() {
     const handleSummarize = async () => {
         if (!translated.trim()) return;
         setLoading(true);
+        setLoadingType('summarizing');
         try {
             // Ask backend to produce a summary in the selected language (it will handle EN roundtrip)
             const res = await axios.post(`${API_BASE_URL}/summarize`, { text: translated, lang });
@@ -273,11 +331,13 @@ function TranslatorPage() {
             alert(`Summarization failed: ${err.response?.data?.error || err.message}`);
         } finally {
             setLoading(false);
+            setLoadingType(null);
         }
     };
 
     return (
         <div className="page">
+            <LoadingOverlay type={loadingType} isVisible={loading} />
             <header className="hero">
                 <h1 className="hero-title">Smart Translator</h1>
                 <p className="hero-tagline">Translate. Understand. Listen.</p>
