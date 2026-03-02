@@ -7,9 +7,12 @@ A full-stack translation application with OCR, document processing, text-to-spee
 ## Features
 
 - **Document Processing**: Upload and extract text from PDF, images, and text files using OCR
-- **Translation**: Real-time translation with friendly/formal tone options across 50+ languages
+- **Translation**: Real-time translation into Indian languages (Hindi/Tamil/Bengali/Gujarati/Telugu)
 - **Interactive Tooltips**: Hover over translated words to view individual meanings
 - **Text-to-Speech**: Audio playback with play, pause, resume controls
+- **AI Summary**: Generate a clear summary of the translated document using Gemini (with fallback when AI is unavailable)
+- **Ask AI (Document Q&A)**: Ask questions about the document and get an answer in the selected language
+- **Mic Input for Questions**: Use browser speech-to-text to dictate questions (where supported)
 - **History Management**: Track translations with user authentication and per-item deletion
 - **Responsive Design**: Modern UI with toast notifications and smooth animations
 
@@ -90,7 +93,9 @@ Access the application at `http://localhost:5173`
 
 ### Translation
 - `POST /upload` - Upload and extract text from documents
-- `POST /translate` - Translate text with mode selection
+- `POST /translate` - Translate text
+- `POST /summarize` - AI summarization for a document
+- `POST /ask` - Ask questions about a document (AI Q&A)
 - `POST /tts` - Generate text-to-speech audio
 - `POST /translateTokens` - Get word-level translations
 
@@ -129,9 +134,13 @@ Configure the following in `server/.env`:
 ```env
 MONGO_URI=mongodb://127.0.0.1:27017/smart-translator
 JWT_SECRET=your-secure-secret-key
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-flash-latest
 PORT=5000
 TRANSLATE_API_URL=https://translate.googleapis.com/translate_a/single
 ```
+
+Note: Do not commit `server/.env` to GitHub. For remote deployment (Render/Railway/etc.), set these variables in the provider dashboard.
 
 ## Contributing
 
