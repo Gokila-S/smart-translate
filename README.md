@@ -1,20 +1,32 @@
 # Smart Translator
 
-A full-stack translation application with OCR, document processing, text-to-speech, and translation history management.
+Smart Translator is a full‑stack AI translation and document understanding app built for Indian languages. Upload a PDF or image (OCR), paste text, translate instantly, generate an AI summary, ask questions about the document, and listen to results with text‑to‑speech — with user accounts and translation history.
 
-![Smart Translator](docs/image.png)
+## Screenshots
+
+![Smart Translator - Translator Workspace 1](docs/img1.png)
+
+![Smart Translator - Translator Workspace 2](docs/img2.png)
 
 ## Features
 
-- **Document Processing**: Upload and extract text from PDF, images, and text files using OCR
-- **Translation**: Real-time translation into Indian languages (Hindi/Tamil/Bengali/Gujarati/Telugu)
-- **Interactive Tooltips**: Hover over translated words to view individual meanings
-- **Text-to-Speech**: Audio playback with play, pause, resume controls
-- **AI Summary**: Generate a clear summary of the translated document using Gemini (with fallback when AI is unavailable)
-- **Ask AI (Document Q&A)**: Ask questions about the document and get an answer in the selected language
-- **Mic Input for Questions**: Use browser speech-to-text to dictate questions (where supported)
-- **History Management**: Track translations with user authentication and per-item deletion
-- **Responsive Design**: Modern UI with toast notifications and smooth animations
+- **PDF / Image / TXT ingestion**: Extract text from PDFs (PyMuPDF), images (OCR), or plain text files
+- **Instant translation**: Translate into Indian languages (Hindi/Tamil/Bengali/Gujarati/Telugu)
+- **Word tooltips**: Hover over translated words to see quick meanings (token-level translation)
+- **Text-to-speech**: Generate and play audio with play/pause/resume controls
+- **AI summary (Gemini + fallback)**: Produce a concise summary of the translated document (still works when AI is unavailable)
+- **Ask AI (Document Q&A)**: Ask questions grounded in the uploaded document and get answers in the selected language
+- **Mic input (where supported)**: Dictate questions using the browser Web Speech API
+- **History + deletion**: Authenticated history per user with per-item delete and clear-all
+- **Modern UX**: Responsive UI with toast notifications
+
+## What You Can Do (Typical Flow)
+
+1. Sign up / log in
+2. Upload a PDF/image or paste text
+3. Translate to your chosen language
+4. Optionally: enable word tooltips, generate an AI summary, ask questions (type or mic), and listen via TTS
+5. Save and manage translations in History
 
 ## Technology Stack
 
@@ -84,6 +96,8 @@ npm run dev
 ```
 
 Access the application at `http://localhost:5173`
+
+Tip: AI features require `GEMINI_API_KEY`. If it’s missing or rate-limited, the app falls back gracefully where possible.
 
 ## API Endpoints
 
