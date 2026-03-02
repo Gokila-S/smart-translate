@@ -4,17 +4,72 @@ import cors from 'cors'
 import fs from 'fs'
 import path from 'path'
 import { execFile } from 'child_process'
+import { randomUUID } from 'crypto'
 import fetch from 'node-fetch'
 import gtts from 'node-gtts'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import authRoutes from './routes/auth.js'
 import historyRoutes from './routes/history.js'
 
 dotenv.config()
 const app = express()
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
+
+// ======== GEMINI AI SETUP =========
+const geminiApiKey = process.env.GEMINI_API_KEY || ''
+const genAI = geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here'
+  ? new GoogleGenerativeAI(geminiApiKey)
+  : null
+// Default to gemini-flash-latest because free-tier rate limits often enable "Flash" but not older model IDs.
+const geminiModelName = process.env.GEMINI_MODEL || 'gemini-flash-latest'
+const geminiModel = genAI ? genAI.getGenerativeModel({ model: geminiModelName }) : null
+
+const LANG_NAMES = { hi: 'Hindi', ta: 'Tamil', bn: 'Bengali', gu: 'Gujarati', te: 'Telugu' }
+
+const parseRetryAfterSeconds = (message) => {
+  const msg = String(message || '')
+  const m1 = msg.match(/Please retry in\s+([0-9]+(?:\.[0-9]+)?)s/i)
+  if (m1) return Math.max(1, Math.ceil(Number(m1[1]) || 0))
+  const m2 = msg.match(/retryDelay"\s*:\s*"(\d+)s"/i)
+  if (m2) return Math.max(1, Number(m2[1]) || 0)
+  return null
+}
+
+const isGeminiQuotaError = (message) => {
+  const msg = String(message || '').toLowerCase()
+  return msg.includes('429') || msg.includes('quota exceeded') || msg.includes('too many requests')
+}
+
+const sanitizePlainText = (input) => {
+  let text = String(input || '').replace(/\r\n?/g, '\n')
+
+  // Remove fenced code blocks
+  text = text.replace(/```[\s\S]*?```/g, '')
+
+  // Remove common markdown formatting
+  text = text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+
+  // Remove leading list markers like "* ", "- ", "• ", "1. "
+  text = text
+    .split('\n')
+    .map(line => line.replace(/^\s*(?:[\-*•]+\s+|\d+\)\s+|\d+\.\s+)/, ''))
+    .join('\n')
+
+  // Drop leftover standalone asterisks that confuse TTS
+  text = text.replace(/\*/g, '')
+
+  // Tidy whitespace
+  text = text.replace(/\n{3,}/g, '\n\n').trim()
+  return text
+}
 
 const uploadDir = path.join(process.cwd(), 'uploads')
 try { fs.mkdirSync(uploadDir, { recursive: true }) } catch {}
@@ -37,9 +92,12 @@ app.post('/upload', upload.single('file'), (req, res) => {
     const runPy = (script, args) => new Promise((resolve, reject) => {
       execFile('python', [script, ...args], { cwd: serverCwd }, (err, stdout, stderr) => {
         if (!err) return resolve(String(stdout || '').trim())
-        execFile('py', ['-3', script, ...args], { cwd: serverCwd }, (err2, stdout2, stderr2) => {
-          if (!err2) return resolve(String(stdout2 || '').trim())
-          return reject(stderr2 || stderr || err2?.message || err?.message)
+        execFile('python3', [script, ...args], { cwd: serverCwd }, (err3, stdout3, stderr3) => {
+          if (!err3) return resolve(String(stdout3 || '').trim())
+          execFile('py', ['-3', script, ...args], { cwd: serverCwd }, (err2, stdout2, stderr2) => {
+            if (!err2) return resolve(String(stdout2 || '').trim())
+            return reject(stderr2 || stderr3 || stderr || err2?.message || err3?.message || err?.message)
+          })
         })
       })
     })
@@ -65,27 +123,121 @@ app.post('/upload', upload.single('file'), (req, res) => {
   }
 })
 
-// ======== TEXT SUMMARIZATION =========
+// ======== TEXT SUMMARIZATION (Gemini AI) =========
 app.post('/summarize', async (req, res) => {
-  const { text } = req.body;
-  if (!text) {
-    return res.status(400).json({ error: 'No text provided' });
+  const { text, lang } = req.body;
+  if (!text) return res.status(400).json({ error: 'No text provided' });
+
+  // Fallback: simple sentence extraction if no Gemini key
+  const simpleFallback = () => {
+    const parts = String(text).trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+    return parts.slice(0, Math.max(1, Math.min(3, parts.length))).join(' ') || text;
+  };
+
+  if (!geminiModel) {
+    return res.json({ summary: simpleFallback(), ai: false });
   }
 
   try {
-    // Simple sentence-based fallback (reliable on all platforms)
-    const parts = String(text).trim().split(/(?<=[.!?])\s+/).filter(Boolean);
-    const summary = parts.slice(0, Math.max(1, Math.min(3, parts.length))).join(' ');
-    return res.json({ summary: summary || text });
+    const targetLang = LANG_NAMES[lang] || 'English';
+    const prompt = [
+      `You are an expert summarizer. Summarize the following text clearly and concisely in ${targetLang}.`,
+      `Produce a 4–6 sentence summary that captures all key points.`,
+      `Return ONLY plain text (no markdown, no bullet points, no asterisks).`,
+      ``,
+      `Text:`,
+      text
+    ].join('\n');
+
+    const result = await geminiModel.generateContent(prompt);
+    const summary = sanitizePlainText(result.response.text());
+    return res.json({ summary, ai: true });
   } catch (e) {
-    console.error('Summarization failed:', e);
-    res.status(500).json({ error: 'Summarization failed', detail: e.message });
+    const detail = e?.message || String(e)
+    console.error('Gemini summarization failed:', detail);
+
+    if (isGeminiQuotaError(detail)) {
+      const retryAfter = parseRetryAfterSeconds(detail)
+      return res.json({
+        summary: simpleFallback(),
+        ai: false,
+        warning: 'AI quota exceeded (Gemini). Showing basic fallback summary.',
+        hint: 'Enable billing / increase quota for your Gemini API key, or use a different key.',
+        retryAfterSeconds: retryAfter || undefined,
+      })
+    }
+
+    return res.json({
+      summary: simpleFallback(),
+      ai: false,
+      warning: 'AI unavailable, used fallback',
+      detail,
+    });
+  }
+});
+
+// ======== AI DOCUMENT Q&A (Gemini) =========
+app.post('/ask', async (req, res) => {
+  const { document, question, lang } = req.body;
+  if (!document || !question) {
+    return res.status(400).json({ error: 'document and question are required' });
+  }
+
+  if (!geminiModel) {
+    return res.status(503).json({ error: 'AI not configured. Add GEMINI_API_KEY to server/.env' });
+  }
+
+  try {
+    const targetLang = LANG_NAMES[lang] || 'English';
+    const docSnippet = document.slice(0, 12000); // stay within token limits
+    const prompt = [
+      `You are a helpful AI assistant. Using ONLY the document provided below, answer the question in ${targetLang}.`,
+      `The question may be written in any language; interpret it and respond in ${targetLang}.`,
+      `Be clear, direct, and informative. If the answer is not found in the document, say so politely in ${targetLang}.`,
+      `Return ONLY plain text (no markdown, no bullet points, no asterisks).`,
+      ``,
+      `--- DOCUMENT START ---`,
+      docSnippet,
+      `--- DOCUMENT END ---`,
+      ``,
+      `Question: ${question}`,
+      ``,
+      `Answer:`
+    ].join('\n');
+
+    const result = await geminiModel.generateContent(prompt);
+    const answer = sanitizePlainText(result.response.text());
+    return res.json({ answer });
+  } catch (e) {
+    const detail = e?.message || String(e)
+    console.error('Gemini Q&A failed:', detail)
+
+    if (isGeminiQuotaError(detail)) {
+      const retryAfter = parseRetryAfterSeconds(detail)
+      if (retryAfter) res.setHeader('Retry-After', String(retryAfter))
+      return res.status(429).json({
+        error: 'AI quota exceeded',
+        detail,
+        hint: 'Your Gemini API key/project has no remaining free-tier quota (or billing is required). Enable billing or use a different key.',
+        retryAfterSeconds: retryAfter || undefined,
+      })
+    }
+
+    return res.status(503).json({
+      error: 'AI unavailable',
+      detail,
+      hint: 'Check GEMINI_API_KEY, model availability, and billing/quota limits.'
+    })
   }
 });
 
 // ======== TRANSLATION =========
 app.post('/translate', async (req, res) => {
-  const { text, to, mode } = req.body
+  try {
+    const { text, to, mode } = req.body
+
+    if (!text || !String(text).trim()) return res.status(400).json({ error: 'text is required' })
+    if (!to || !String(to).trim()) return res.status(400).json({ error: 'to (target language) is required' })
 
   const glossary = {
     'utilize': 'use',
@@ -168,12 +320,65 @@ app.post('/translate', async (req, res) => {
     return out.join('\n')
   }
   
-  const source = mode === 'friendly' ? simplify(text) : text
-  
-  const translateBaseUrl = process.env.TRANSLATE_API_URL || 'https://translate.googleapis.com/translate_a/single'
-  const url = `${translateBaseUrl}?client=gtx&sl=auto&tl=${to}&dt=t&q=${encodeURIComponent(source)}`
-  const result = await fetch(url).then(r => r.json())
-  res.json({ translated: result[0].map(p => p[0]).join('') })
+    const source = mode === 'friendly' ? simplify(String(text)) : String(text)
+
+    // Google translate unofficial endpoint uses GET; long documents can exceed URL limits.
+    // Chunk the text to avoid 414/HTML responses.
+    const MAX_CHARS = 1500
+    const chunkText = (input, maxChars) => {
+      const normalized = String(input).replace(/\r\n?/g, '\n')
+      const lines = normalized.split('\n')
+      const chunks = []
+      let buf = ''
+      for (const line of lines) {
+        const part = (buf ? '\n' : '') + line
+        if ((buf + part).length > maxChars) {
+          if (buf) chunks.push(buf)
+          // If a single line is too long, hard-split it.
+          if (line.length > maxChars) {
+            for (let i = 0; i < line.length; i += maxChars) chunks.push(line.slice(i, i + maxChars))
+            buf = ''
+          } else {
+            buf = line
+          }
+        } else {
+          buf += part
+        }
+      }
+      if (buf) chunks.push(buf)
+      return chunks.length ? chunks : ['']
+    }
+
+    const translateBaseUrl = process.env.TRANSLATE_API_URL || 'https://translate.googleapis.com/translate_a/single'
+    const chunks = chunkText(source, MAX_CHARS)
+
+    const translateOne = async (chunk) => {
+      const url = `${translateBaseUrl}?client=gtx&sl=auto&tl=${encodeURIComponent(to)}&dt=t&q=${encodeURIComponent(chunk)}`
+      const resp = await fetch(url)
+      const raw = await resp.text()
+      if (!resp.ok) {
+        throw new Error(`Translate API failed (${resp.status}). Response: ${raw.slice(0, 200)}`)
+      }
+      let data
+      try {
+        data = JSON.parse(raw)
+      } catch {
+        throw new Error(`Translate API returned non-JSON. First bytes: ${raw.slice(0, 60)}`)
+      }
+      return (data?.[0] || []).map(p => p?.[0] || '').join('')
+    }
+
+    let translated = ''
+    for (const c of chunks) {
+      // Sequential to avoid rate limits
+      translated += await translateOne(c)
+    }
+
+    res.json({ translated })
+  } catch (e) {
+    console.error('Translation failed:', e)
+    res.status(500).json({ error: 'Translation failed', detail: e?.message || String(e) })
+  }
 })
 
 // ======== GLOSSARY (word-level tooltip support) =========
@@ -259,7 +464,7 @@ app.post('/tts', (req, res) => {
 
   try {
     const tts = gtts(lang || 'ta');
-    const outPath = path.join(process.cwd(), 'tts.mp3');
+    const outPath = path.join(process.cwd(), 'uploads', `tts-${randomUUID()}.mp3`);
 
     tts.save(outPath, text, () => {
       res.sendFile(outPath, (err) => {
