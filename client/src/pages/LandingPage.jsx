@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, FileText, Languages, Volume2, Upload, Zap, Users, Download, HelpCircle, Globe, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
 
@@ -17,42 +17,42 @@ const LandingPage = () => {
     {
       icon: Languages,
       title: "Multi-language Support",
-      description: "Translate in Hindi, Tamil, Bengali, and more with high accuracy.",
+      description: "Translate into Hindi, Tamil, Bengali, Gujarati, Telugu and more with high accuracy.",
       color: "from-blue-500 to-cyan-500",
       bgAccent: "rgba(59, 130, 246, 0.1)"
     },
     {
       icon: FileText,
       title: "Text & Document Extraction",
-      description: "Upload PDFs, images, or paste text for instant processing.",
+      description: "Paste text or upload PDFs and images — extract content with fast OCR and PDF reading.",
       color: "from-purple-500 to-pink-500",
       bgAccent: "rgba(147, 51, 234, 0.1)"
     },
     {
       icon: Zap,
-      title: "Intelligent Summarization",
-      description: "Condense lengthy content into concise, meaningful summaries.",
+      title: "AI Summary & Document Q&A",
+      description: "Generate clear summaries and ask questions about your document — answers come back in your selected language.",
       color: "from-orange-500 to-yellow-500",
       bgAccent: "rgba(249, 115, 22, 0.1)"
     },
     {
       icon: Volume2,
       title: "Text-to-Speech",
-      description: "Listen to translations in natural, clear voices.",
+      description: "Listen to translations and AI answers with smooth play/pause/resume controls.",
       color: "from-green-500 to-emerald-500",
       bgAccent: "rgba(34, 197, 94, 0.1)"
     },
     {
       icon: Download,
-      title: "Export & Download",
-      description: "Save your translations as text files, audio, or Word documents.",
+      title: "History & Downloads",
+      description: "Save translations to your personal history and download outputs as text or audio whenever you need.",
       color: "from-red-500 to-rose-500",
       bgAccent: "rgba(239, 68, 68, 0.1)"
     },
     {
       icon: HelpCircle,
       title: "Word Tooltips",
-      description: "Hover over words for instant definitions and pronunciation guides.",
+      description: "Hover over translated words for quick meanings and pronunciation guidance.",
       color: "from-indigo-500 to-purple-500",
       bgAccent: "rgba(99, 102, 241, 0.1)"
     }
@@ -62,19 +62,19 @@ const LandingPage = () => {
     {
       step: "01",
       title: "Upload or Type",
-      description: "Add text, document, or image.",
+      description: "Paste text or upload a PDF, TXT, or image.",
       icon: Upload
     },
     {
       step: "02",
-      title: "Translate & Summarize",
-      description: "Process instantly with one click.",
+      title: "Translate, Summarize & Ask",
+      description: "Translate, get an AI summary, or ask questions (type or use the mic where supported).",
       icon: Zap
     },
     {
       step: "03",
-      title: "Listen & Share",
-      description: "Hear the output or share it with others.",
+      title: "Listen & Save",
+      description: "Listen with text-to-speech and keep a record in your history.",
       icon: Volume2
     }
   ];
@@ -159,7 +159,7 @@ const LandingPage = () => {
             letterSpacing: '0.05em'
           }}>
             <Sparkles size={14} style={{ display: 'inline', marginRight: '8px' }} />
-            AI-POWERED TRANSLATION
+            AI-POWERED TRANSLATION & Q&A
           </div>
 
           <h1 style={{
@@ -187,7 +187,7 @@ const LandingPage = () => {
             lineHeight: '1.8',
             fontSize: 'clamp(16px, 2vw, 20px)'
           }}>
-            Translate, summarize, and listen to content in multiple Indian languages with advanced AI. Experience seamless communication at your fingertips.
+            Translate, summarize, ask questions about documents, and listen with text-to-speech — all in multiple Indian languages. Upload PDFs/images or paste text and get results instantly.
           </p>
           
           <div style={{
@@ -311,7 +311,7 @@ const LandingPage = () => {
             Everything You Need in One Platform
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '18px', maxWidth: '640px', margin: '0 auto' }}>
-            Powerful features designed to simplify your translation and communication needs.
+            Powerful features designed to simplify translation, document understanding, and learning.
           </p>
         </div>
 
